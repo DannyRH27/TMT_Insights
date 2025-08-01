@@ -7,11 +7,11 @@ from rest_framework.request import Request
 def retrieve_orders_by_tag(tag:OrderTag) -> Response:
     # check if the tag exists first
     if not OrderTag.objects.filter(id=tag.id).exists():
-        return Response(f"OrderTag with ID {Ordertag.id} does not exist.", status=404)
+        return Response(data={"error": f"OrderTag with ID {tag.id} does not exist."}, status=404)
 
     orders = tag.orders.all()
 
     if not orders:
-        return Response(f"Orders associated with OrderTag with ID {tag.id} does not exist.", status=404)
+        return Response(data={"error": f"Orders associated with OrderTag with ID {tag.id} does not exist."}, status=404)
 
-    return Response(OrderSerializer(orders, many=True).data, status=200)
+    return Response(data={"response": OrderSerializer(orders, many=True).data}, status=200)
