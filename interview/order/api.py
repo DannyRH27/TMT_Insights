@@ -15,17 +15,21 @@
 from interview.order.models import Order
 from interview.order.serializers import OrderSerializer
 from datetime import datetime
+from rest_framework.response import Response
+from rest_framework.request import Request
 
 
+def get_orders_by_start_date(request: Request) -> list[dict]:
 
-def get_orders_by_start_date(start_date: str) -> list[dict]:
+    start_date = request.query_params.get('start_date')
     if start_date is None:
         return []
 
     # check if start date is a valid date
     # use util function so we don't have to instantiate an OrderSerializer unless we have orders
     if not is_valid_date(start_date):
-        return []
+        return Response("Start date is not valid.", status=400)
+        
     
     # check if start date is in the future
     # actually, we don't need to check if it is in the future, because the start dates can be in the future, so as long as it is before embargo date it is okay.
@@ -33,16 +37,16 @@ def get_orders_by_start_date(start_date: str) -> list[dict]:
     #     return []
 
     # happy case
-    orders = Order.objects.filter(start_date__gte=start_date, embargo_date__lte=start_date)
+    orders = Order.objects.filter(start_date__gte=start_date, embargo_date__gte=start_date)
 
     # No matching orders found
-    if not orders:
-        return []
+    if not orders.exists():
+        return Response(f"No orders found before start date: {start_date}.", status=404)
 
     # do i need many?? Yeah, bc i return as list. worst case it's a list of 1
     serialized_orders = OrderSerializer(orders, many=True).data
 
-    return serialized_orders
+    return Response(serialized_orders, status=200)
 
 
 
