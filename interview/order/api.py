@@ -13,6 +13,6 @@ def retrieve_tags_by_order(order: Order) -> Response:
     tags = Order.tags.all()
 
     if not tags:
-        return Response(f"No tags associated with Order ID {order.id}", status=404)
+        return Response(data={"error": f"No tags associated with Order ID {order.id}"}, status=404)
 
-    return Response(OrderTagSerializer(tags, many=True).data, status=200)
+    return Response(data={"response": OrderTagSerializer(tags, many=True).data}, status=200)
