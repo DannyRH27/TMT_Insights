@@ -16,24 +16,16 @@ def test_missing_start_date_parameter():
 
 
 def test_invalid_date_format():
-    # Fresh setup
-    Inventory.objects.all().delete()
-    Order.objects.all().delete()
-    
     request = Request()
     request.query_params = {'start_date': 'invalid-date'}
     
     result = get_orders_by_start_date(request)
-    
-    assert result.get('error') == 'Start date is not valid.'
+    data = result.data.get("response")
+    assert data.get('error') == 'Start date is not valid.'
     assert result.get('status') == 400
 
 
 def test_valid_date_with_matching_orders():
-    # Fresh setup
-    Inventory.objects.all().delete()
-    Order.objects.all().delete()
-
     inventory = Inventory.objects.create(
         name="Test Movie",
         description="Test description"
@@ -62,10 +54,6 @@ def test_valid_date_with_matching_orders():
     
 
 def test_valid_date_with_no_matching_orders():
-    # Fresh setup
-    Inventory.objects.all().delete()
-    Order.objects.all().delete()
-
     request = Request()
     request.query_params = {'start_date': '2024-03-01'}
     
@@ -84,7 +72,8 @@ def test_valid_date_with_no_matching_orders():
     )
     
     assert isinstance(result, dict)
-    assert result.get('error') == 'No orders found before start date: 2024-03-01.'
+    data = result.get('data', {})
+    assert data.get('error') == 'No orders found before start date: 2024-03-01.'
     assert result.get('status') == 404
 
 
@@ -99,10 +88,20 @@ def test_is_valid_date_function():
         pass
 
 if __name__ == "__main__":
+    # NOTE: HACKY TEARDOWN
+    # Delete Inventory and Orders after teach test.
+    
+
     test_missing_start_date_parameter()
+    Inventory.objects.all().delete()
     test_invalid_date_format()
+    Inventory.objects.all().delete()
     test_valid_date_with_matching_orders()
+    Inventory.objects.all().delete()
     test_valid_date_with_no_matching_orders()
+    Inventory.objects.all().delete()
+
+    # Not needed for this test
     test_is_valid_date_function()
     
     print("All tests passed!")

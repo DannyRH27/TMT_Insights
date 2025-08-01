@@ -28,7 +28,7 @@ def get_orders_by_start_date(request: Request) -> list[dict]:
     # check if start date is a valid date
     # use util function so we don't have to instantiate an OrderSerializer unless we have orders
     if not is_valid_date(start_date):
-        return Response(error="Start date is not valid.", status=400)
+        return Response(data={"error":"Start date is not valid."}, status=400)
         
     
     # check if start date is in the future
@@ -41,12 +41,12 @@ def get_orders_by_start_date(request: Request) -> list[dict]:
 
     # No matching orders found
     if not orders.exists():
-        return Response(error=f"No orders found before start date: {start_date}.", status=404)
+        return Response(data={"error": f"No orders found before start date: {start_date}."}, status=404)
 
     # do i need many?? Yeah, bc i return as list. worst case it's a list of 1
     serialized_orders = OrderSerializer(orders, many=True).data
 
-    return Response(serialized_orders, status=200)
+    return Response(data={"response": serialized_orders}, status=200)
 
 
 
