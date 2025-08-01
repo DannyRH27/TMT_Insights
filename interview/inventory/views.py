@@ -15,6 +15,8 @@ from interview.inventory.serializers import (
     InventoryTagSerializer,
     InventoryTypeSerializer,
 )
+from datetime import datetime
+from django.utils import timezone
 
 
 class InventoryListCreateView(APIView):
@@ -43,6 +45,32 @@ class InventoryListCreateView(APIView):
 
     def get_queryset(self):
         return self.queryset.all()
+
+
+class InventoryListRetrieveAfterDayView(APIView):
+    queryset = Inventory.objects.all()
+    serializer_class = InventorySerializer
+
+    def get(self, request: Request, *args, **kwargs) -> Response:
+
+        date = kwargs["date"]
+
+        if not date:
+            return Response({"error": "No date provided."}, status=400)
+            
+        # Assume %YY-MM-DD
+        try:
+            date = datetime.strptime(date, "%Y-%m-%d")
+            date = timezone.make_aware(date)
+        except ValueError as e:
+            return Response({"error": str(e)}, status=400)
+        
+        serializer = self.serializer_class(self.get_queryset(date), many=True)
+
+        return Response(serializer.data, status=200)
+
+    def get_queryset(self, date):
+        return self.queryset.filter(created_at__gte=date)
 
 
 class InventoryRetrieveUpdateDestroyView(APIView):
@@ -201,6 +229,36 @@ class InventoryTypeListCreateView(APIView):
 
     def get_queryset(self):
         return self.queryset.all()
+
+
+class InventoryTypeRetrieveUpdateDestroyView(APIView):
+    queryset = InventoryType.objects.all()
+    serializer_class = InventoryTypeSerializer
+
+    def get(self, request: Request, *args, **kwargs) -> Response:
+        inventory = self.get_queryset(id=kwargs["id"])
+        serializer = self.serializer_class(inventory)
+
+        return Response(serializer.data, status=200)
+
+    def patch(self, request: Request, *args, **kwargs) -> Response:
+        inventory = self.get_queryset(id=kwargs["id"])
+        serializer = self.serializer_class(inventory, data=request.data, partial=True)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=400)
+
+        serializer.save()
+
+        return Response(serializer.data, status=200)
+
+    def delete(self, request: Request, *args, **kwargs) -> Response:
+        inventory = self.get_queryset(id=kwargs["id"])
+        inventory.delete()
+
+        return Response(status=204)
+
+    def get_queryset(self, **kwargs):
+        return self.queryset.get(**kwargs)
 
 
 class InventoryTypeRetrieveUpdateDestroyView(APIView):
