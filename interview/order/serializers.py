@@ -1,6 +1,5 @@
 from rest_framework import serializers
 from interview.inventory.serializers import InventorySerializer
-from datetime import datetime
 
 from interview.order.models import Order, OrderTag
 
